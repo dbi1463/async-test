@@ -4,12 +4,12 @@ import static java.lang.System.currentTimeMillis;
 
 public class SingleRequestResult {
 
-	private int requestId;
+	private String requestId;
 	private long startedTime;
 	private long finishedTime;
 	private boolean succeeded;
 
-	public static SingleRequestResult start(int requestId) {
+	public static SingleRequestResult start(final String requestId) {
 		SingleRequestResult result = new SingleRequestResult();
 		result.startedTime = currentTimeMillis();
 		result.requestId = requestId;
@@ -22,7 +22,7 @@ public class SingleRequestResult {
 		return this;
 	}
 
-	public int getRequestId() {
+	public String getRequestId() {
 		return this.requestId;
 	}
 
@@ -43,6 +43,6 @@ public class SingleRequestResult {
 	}
 
 	public String toString() {
-		return String.format("%d, %d, %d, %d, %b", this.requestId, this.startedTime, this.finishedTime, this.getElapsedTime(), this.succeeded);
+		return String.format("%s, %d, %d, %d, %b", this.requestId, this.startedTime, this.finishedTime, this.getElapsedTime(), this.succeeded);
 	}
 }

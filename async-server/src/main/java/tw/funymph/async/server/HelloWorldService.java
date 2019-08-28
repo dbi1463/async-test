@@ -1,30 +1,35 @@
 package tw.funymph.async.server;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static tw.funymph.async.server.RequestTracker.track;
+
 import java.util.concurrent.CompletableFuture;
 
 public class HelloWorldService {
 
 	SleepyRepository repository = new SleepyRepository();
 
-	public String hello() {
-		int count = this.repository.count();
-		this.doSomething(count);
-		this.repository.save();
+	public String hello(final String requestId) {
+		track(requestId, "HelloWorldService::hello");
+		int count = this.repository.count(requestId);
+		this.doSomething(count, requestId);
+		this.repository.save(requestId);
 		return "Hello World";
 	}
 
-	public CompletableFuture<String> helloAsync() {
+	public CompletableFuture<String> helloAsync(final String requestId) {
+		track(requestId, "HelloWorldService::helloAsync");
 		return this.repository
-			.countAsync()
+			.countAsync(requestId)
 			.thenApply((count) -> {
-				this.doSomething(count);
+				this.doSomething(count, requestId);
 				return null;
 			})
-			.thenCompose((o) -> this.repository.saveAsync())
-			.thenCompose((o) -> CompletableFuture.completedFuture("Hello World"));
+			.thenCompose((o) -> this.repository.saveAsync(requestId))
+			.thenCompose((o) -> completedFuture("Hello World"));
 	}
 
-	private void doSomething(int count) {
-		
+	private void doSomething(final int count, final String requestId) {
+		track(requestId, "HelloWorldService::doSomething");
 	}
 }

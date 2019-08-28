@@ -10,15 +10,15 @@ import java.util.stream.LongStream;
 
 public class Timestamper {
 
-	private Map<Integer, SingleRequestResult> results = new ConcurrentHashMap<>();
+	private Map<String, SingleRequestResult> results = new ConcurrentHashMap<>();
 
-	public SingleRequestResult start(int requestId) {
+	public SingleRequestResult start(final String requestId) {
 		SingleRequestResult result = SingleRequestResult.start(requestId);
 		this.results.put(requestId, result);
 		return result;
 	}
 
-	public SingleRequestResult stop(int requestId, boolean succeeded) {
+	public SingleRequestResult stop(final String requestId, final boolean succeeded) {
 		return this.results.computeIfPresent(requestId, (key, value) -> value.finish(succeeded));
 	}
 
@@ -54,7 +54,7 @@ public class Timestamper {
 		long base = this.first();
 		builder.append("ID, start, start-shifted, finish, finish-shifted, elapsed, succeeded\n");
 		this.results.forEach((key, value) -> {
-			builder.append(String.format("%d, %d, %d, %d, %d, %d, %b\n",
+			builder.append(String.format("%s, %d, %d, %d, %d, %d, %b\n",
 				value.getRequestId(),
 				value.getStartedTime(),
 				value.getStartedTime() - base,

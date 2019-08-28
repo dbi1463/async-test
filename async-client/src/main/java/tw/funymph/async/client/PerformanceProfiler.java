@@ -1,14 +1,17 @@
 package tw.funymph.async.client;
 
 import static java.lang.String.format;
+import static java.lang.String.valueOf;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.System.out;
 import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.stream.IntStream.rangeClosed;
 
-//import java.io.File;
+import java.io.File;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -30,16 +33,18 @@ public class PerformanceProfiler {
 		OkHttpClient client = new OkHttpClient();
 		Timestamper timestamper = new Timestamper();
 		long totalStarted = currentTimeMillis();
-		allOf(rangeClosed(1, times).mapToObj((requestId) -> {
+		ExecutorService executor = new ScheduledThreadPoolExecutor(times);
+		allOf(rangeClosed(1, times).mapToObj((index) -> {
+			final String requestId = valueOf(index);
 			return runAsync(() -> {
 				timestamper.start(requestId);
-				Request request = new Request.Builder().url(format("http://localhost:8080/%s", method)).build();
+				Request request = new Request.Builder().url(format("http://localhost:8080/%s/%s", method, requestId)).build();
 				try (Response response = client.newCall(request).execute()) {
 					timestamper.stop(requestId, true);
 				} catch(Exception e) {
 					timestamper.stop(requestId, false);
 				}
-			});
+			}, executor);
 		}).toArray(CompletableFuture[]::new)).join();
 		long totalElapsed = currentTimeMillis() - totalStarted;
 		out.println(format("use total %d ms to send %d requests for %s", totalElapsed, times, method));
@@ -49,7 +54,8 @@ public class PerformanceProfiler {
 		out.println(format("average request time: %f", timestamper.mean()));
 		out.println(format("90 average request time: %f", timestamper.ninetiethMean()));
 		out.println(format("95 average request time: %f", timestamper.ninetyFifthMean()));
-//		File file = new File(String.format("%s %d.csv", method, System.currentTimeMillis()));
-//		timestamper.save(file);
+		executor.shutdown();
+		File file = new File(String.format("target/%s %d.csv", method, System.currentTimeMillis()));
+		timestamper.save(file);
 	}
 }
