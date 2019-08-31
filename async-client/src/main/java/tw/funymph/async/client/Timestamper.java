@@ -49,6 +49,14 @@ public class Timestamper {
 		return this.elapsedTimes().sorted().limit(ninetyFifth).average().orElse(0);
 	}
 
+	public int succeeded() {
+		return this.results.values().stream().mapToInt((result) -> (result.isSucceeded() ? 1 : 0)).sum();
+	}
+
+	public int failed() {
+		return this.results.size() - this.succeeded();
+	}
+
 	public void save(File file) {
 		StringBuilder builder = new StringBuilder();
 		long base = this.first();

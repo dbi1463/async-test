@@ -48,6 +48,7 @@ public class PerformanceProfiler {
 		}).toArray(CompletableFuture[]::new)).join();
 		long totalElapsed = currentTimeMillis() - totalStarted;
 		out.println(format("use total %d ms to send %d requests for %s", totalElapsed, times, method));
+		out.println(format("%d succeeded, %d failed", timestamper.succeeded(), timestamper.failed()));
 		out.println(format("min request time: %d", timestamper.min()));
 		out.println(format("max request time: %d", timestamper.max()));
 		out.println(format("medium request time: %d", timestamper.median()));

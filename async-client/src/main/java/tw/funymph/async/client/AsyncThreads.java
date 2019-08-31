@@ -12,7 +12,6 @@ public class AsyncThreads {
 
 	private static void whichThead(final String action) {
 		out.println(format("%s run at %s", action, currentThread().getName()));
-		
 	}
 
 	private static String world() {
