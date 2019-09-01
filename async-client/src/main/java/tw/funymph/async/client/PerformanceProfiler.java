@@ -25,15 +25,31 @@ public class PerformanceProfiler {
 			out.println("please provide method and times");
 			return;
 		}
-		int times = parseInt(args[1]);
-		profile(args[0], times);
+		int requests = parseInt(args[1]);
+		long totalStarted = currentTimeMillis();
+		String method = args[0];
+		Timestamper timestamper = profile(method, requests);
+		dumpResult(requests, totalStarted, method, timestamper);
 	}
 
-	private static void profile(String method, int requests) {
+	private static void dumpResult(int requests, long totalStarted, String method, Timestamper timestamper) {
+		long totalElapsed = currentTimeMillis() - totalStarted;
+		out.println(format("use total %d ms to send %d requests for %s", totalElapsed, requests, method));
+		out.println(format("%d succeeded, %d failed", timestamper.succeeded(), timestamper.failed()));
+		out.println(format("min request time: %d", timestamper.min()));
+		out.println(format("max request time: %d", timestamper.max()));
+		out.println(format("medium request time: %d", timestamper.median()));
+		out.println(format("average request time: %f", timestamper.mean()));
+		out.println(format("90 average request time: %f", timestamper.ninetiethMean()));
+		out.println(format("95 average request time: %f", timestamper.ninetyFifthMean()));
+		File file = new File(String.format("target/%s-%d-%d.csv", method, requests, currentTimeMillis()));
+		timestamper.save(file);
+	}
+
+	private static Timestamper profile(final String method, final int requests) {
 		out.println(format("profile %s", method));
-		OkHttpClient client = new OkHttpClient();
 		Timestamper timestamper = new Timestamper();
-		long totalStarted = currentTimeMillis();
+		OkHttpClient client = new OkHttpClient();
 		ExecutorService executor = new ScheduledThreadPoolExecutor(requests);
 		allOf(rangeClosed(1, requests).mapToObj((index) -> {
 			final String requestId = valueOf(index);
@@ -47,17 +63,7 @@ public class PerformanceProfiler {
 				}
 			}, executor);
 		}).toArray(CompletableFuture[]::new)).join();
-		long totalElapsed = currentTimeMillis() - totalStarted;
-		out.println(format("use total %d ms to send %d requests for %s", totalElapsed, requests, method));
-		out.println(format("%d succeeded, %d failed", timestamper.succeeded(), timestamper.failed()));
-		out.println(format("min request time: %d", timestamper.min()));
-		out.println(format("max request time: %d", timestamper.max()));
-		out.println(format("medium request time: %d", timestamper.median()));
-		out.println(format("average request time: %f", timestamper.mean()));
-		out.println(format("90 average request time: %f", timestamper.ninetiethMean()));
-		out.println(format("95 average request time: %f", timestamper.ninetyFifthMean()));
 		executor.shutdown();
-		File file = new File(String.format("target/%s-%d-%d.csv", method, requests, currentTimeMillis()));
-		timestamper.save(file);
+		return timestamper;
 	}
 }
