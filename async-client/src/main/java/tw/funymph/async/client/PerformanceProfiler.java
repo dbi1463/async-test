@@ -1,5 +1,6 @@
 package tw.funymph.async.client;
 
+import static java.lang.Integer.parseInt;
 import static java.lang.String.format;
 import static java.lang.String.valueOf;
 import static java.lang.System.currentTimeMillis;
@@ -24,17 +25,17 @@ public class PerformanceProfiler {
 			out.println("please provide method and times");
 			return;
 		}
-		int times = Integer.parseInt(args[1]);
+		int times = parseInt(args[1]);
 		profile(args[0], times);
 	}
 
-	private static void profile(String method, int times) {
+	private static void profile(String method, int requests) {
 		out.println(format("profile %s", method));
 		OkHttpClient client = new OkHttpClient();
 		Timestamper timestamper = new Timestamper();
 		long totalStarted = currentTimeMillis();
-		ExecutorService executor = new ScheduledThreadPoolExecutor(times);
-		allOf(rangeClosed(1, times).mapToObj((index) -> {
+		ExecutorService executor = new ScheduledThreadPoolExecutor(requests);
+		allOf(rangeClosed(1, requests).mapToObj((index) -> {
 			final String requestId = valueOf(index);
 			return runAsync(() -> {
 				timestamper.start(requestId);
@@ -47,7 +48,7 @@ public class PerformanceProfiler {
 			}, executor);
 		}).toArray(CompletableFuture[]::new)).join();
 		long totalElapsed = currentTimeMillis() - totalStarted;
-		out.println(format("use total %d ms to send %d requests for %s", totalElapsed, times, method));
+		out.println(format("use total %d ms to send %d requests for %s", totalElapsed, requests, method));
 		out.println(format("%d succeeded, %d failed", timestamper.succeeded(), timestamper.failed()));
 		out.println(format("min request time: %d", timestamper.min()));
 		out.println(format("max request time: %d", timestamper.max()));
@@ -56,7 +57,7 @@ public class PerformanceProfiler {
 		out.println(format("90 average request time: %f", timestamper.ninetiethMean()));
 		out.println(format("95 average request time: %f", timestamper.ninetyFifthMean()));
 		executor.shutdown();
-		File file = new File(String.format("target/%s %d.csv", method, System.currentTimeMillis()));
+		File file = new File(String.format("target/%s-%d-%d.csv", method, requests, currentTimeMillis()));
 		timestamper.save(file);
 	}
 }

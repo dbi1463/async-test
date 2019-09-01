@@ -1,5 +1,7 @@
 package tw.funymph.async.client;
 
+import static java.lang.String.format;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
@@ -7,6 +9,7 @@ import java.io.Writer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 public class Timestamper {
 
@@ -61,8 +64,8 @@ public class Timestamper {
 		StringBuilder builder = new StringBuilder();
 		long base = this.first();
 		builder.append("ID, start, start-shifted, finish, finish-shifted, elapsed, succeeded\n");
-		this.results.forEach((key, value) -> {
-			builder.append(String.format("%s, %d, %d, %d, %d, %d, %b\n",
+		this.sortedResults().forEach((value) -> {
+			builder.append(format("%s, %d, %d, %d, %d, %d, %b\n",
 				value.getRequestId(),
 				value.getStartedTime(),
 				value.getStartedTime() - base,
@@ -77,6 +80,10 @@ public class Timestamper {
 		} catch(Exception e) {
 			
 		}
+	}
+
+	private Stream<SingleRequestResult> sortedResults() {
+		return this.results.values().stream().sorted((a, b) -> (int) (a.getStartedTime() - b.getStartedTime()));
 	}
 
 	private long first() {
