@@ -7,7 +7,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class HelloWorldService {
 
-	SleepyRepository repository = new SleepyRepository();
+	private SleepyRepository repository = new SleepyRepository();
 
 	public String hello(final String requestId) {
 		track(requestId, "HelloWorldService::hello");
