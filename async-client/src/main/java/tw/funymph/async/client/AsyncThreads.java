@@ -32,7 +32,7 @@ public class AsyncThreads {
 	public static void main(String[] args) {
 		whichThead("main");
 		supplyAsync(AsyncThreads::world)
-		.thenComposeAsync(AsyncThreads::hello)
-		.thenAccept(AsyncThreads::say);
+			.thenComposeAsync(AsyncThreads::hello)
+			.thenAccept(AsyncThreads::say);
 	}
 }

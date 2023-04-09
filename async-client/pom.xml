@@ -13,7 +13,6 @@
 	<name>async-client</name>
 	<url>http://maven.apache.org</url>
 	<properties>
-		<java.version>1.8</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<dependencies>
@@ -25,13 +24,13 @@
 	</dependencies>
 	<build>
 		<plugins>
-			<!-- For compile source codes -->
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
+				<version>${maven-compiler-version}</version>
 				<configuration>
 					<source>${java.version}</source>
 					<target>${java.version}</target>
+					<enablePreview>true</enablePreview>
 				</configuration>
 			</plugin>
 		</plugins>
