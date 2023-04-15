@@ -3,13 +3,20 @@ package tw.funymph.async.server;
 import static java.lang.Thread.sleep;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
+import static java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor;
+import static tw.funymph.async.server.Config.virtualThreadedRepository;
 import static tw.funymph.async.server.RequestTracker.track;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 
+@SuppressWarnings("preview")
 public class SleepyRepository {
 
-	int count(final String requestId) {
+	private ExecutorService executor = newVirtualThreadPerTaskExecutor();
+
+    int count(final String requestId) {
 		track(requestId, "SleepyRepository::count");
 		asleep(1000, requestId);
 		return 1;
@@ -21,17 +28,19 @@ public class SleepyRepository {
 	}
 
 	CompletableFuture<Integer> countAsync(final String requestId) {
-		return supplyAsync(() -> {
+		Supplier<Integer> supplier = () -> {
 			track(requestId, "SleepyRepository::supplyAsync::count");
 			return this.count(requestId);
-		});
+		}; 
+		return virtualThreadedRepository ? supplyAsync(supplier, executor) : supplyAsync(supplier);
 	}
 
 	CompletableFuture<Void> saveAsync(final String requestId) {
-		return runAsync(() -> {
+		Runnable runnable = () -> {
 			track(requestId, "SleepyRepository::supplyAsync::save");
 			this.save(requestId);
-		});
+		};
+		return virtualThreadedRepository ? runAsync(runnable, executor) : runAsync(runnable);
 	}
 
 	private void asleep(final long milliseconds, final String requestId) {

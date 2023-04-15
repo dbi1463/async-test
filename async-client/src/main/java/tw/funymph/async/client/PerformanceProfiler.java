@@ -5,18 +5,18 @@ import static java.lang.String.format;
 import static java.lang.String.valueOf;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.System.out;
-import static java.util.concurrent.CompletableFuture.allOf;
-import static java.util.concurrent.CompletableFuture.runAsync;
+import static java.net.http.HttpRequest.newBuilder;
+import static java.net.http.HttpResponse.BodyHandlers.ofString;
+import static java.time.Duration.ofSeconds;
+import static java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.rangeClosed;
 
 import java.io.File;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 public class PerformanceProfiler {
 
@@ -49,21 +49,39 @@ public class PerformanceProfiler {
 	private static Timestamper profile(final String method, final int requests) {
 		out.println(format("profile %s", method));
 		Timestamper timestamper = new Timestamper();
-		OkHttpClient client = new OkHttpClient();
-		ExecutorService executor = new ScheduledThreadPoolExecutor(requests);
-		allOf(rangeClosed(1, requests).mapToObj((index) -> {
-			final String requestId = valueOf(index);
-			return runAsync(() -> {
-				timestamper.start(requestId);
-				Request request = new Request.Builder().url(format("http://localhost:8080/%s/%s", method, requestId)).build();
-				try (Response response = client.newCall(request).execute()) {
-					timestamper.stop(requestId, true);
-				} catch(Exception e) {
-					timestamper.stop(requestId, false);
-				}
-			}, executor);
-		}).toArray(CompletableFuture[]::new)).join();
+		
+		@SuppressWarnings("preview")
+		var executor = newVirtualThreadPerTaskExecutor();
+		List<Callable<String>> tasks = rangeClosed(1, requests).mapToObj((index) -> {
+			Callable<String> task = () -> {
+				return sendRequest(method, index, timestamper);
+			};
+			return task;
+		}).collect(toList());
+		
+		try {
+			executor.invokeAll(tasks);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		executor.shutdown();
 		return timestamper;
+	}
+
+	private static String sendRequest(final String method, final int index, final Timestamper timestamper) {
+		var requestId = valueOf(index);
+		timestamper.start(requestId);
+		var requst = newBuilder(URI.create("http://localhost:8080/%s/%s".formatted(method, requestId))).build();
+		try {
+			HttpClient.newBuilder()
+				.connectTimeout(ofSeconds(10))
+				.build()
+				.send(requst, ofString());
+			timestamper.stop(requestId, true);
+		} catch (Exception e) {
+			timestamper.stop(requestId, false);
+			e.printStackTrace();
+		}
+		return requestId;
 	}
 }

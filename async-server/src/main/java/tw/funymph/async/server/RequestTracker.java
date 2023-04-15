@@ -7,6 +7,6 @@ import static java.lang.Thread.currentThread;
 public class RequestTracker {
 
 	public static void track(final String requestId, final String action) {
-		out.println(format("[%s] do %s at %s", requestId, action, currentThread().getName()));
+		out.println(format("[%s] do %s at %s", requestId, action, currentThread().toString()));
 	}
 }

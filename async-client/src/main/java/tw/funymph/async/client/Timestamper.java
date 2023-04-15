@@ -39,21 +39,35 @@ public class Timestamper {
 
 	public long median() {
 		int fiftieth = results.size() / 2;
-		return this.elapsedTimes().sorted().skip(fiftieth).findFirst().orElse(0);
+		return this.elapsedTimes()
+			.sorted()
+			.skip(fiftieth)
+			.findFirst().orElse(0);
 	}
 
 	public double ninetiethMean() {
 		int ninetieth = results.size() - (results.size() / 10);
-		return this.elapsedTimes().sorted().limit(ninetieth).average().orElse(0);
+		return this.elapsedTimes()
+			.sorted()
+			.limit(ninetieth)
+			.average()
+			.orElse(0);
 	}
 
 	public double ninetyFifthMean() {
 		int ninetyFifth = results.size() - (results.size() / 20);
-		return this.elapsedTimes().sorted().limit(ninetyFifth).average().orElse(0);
+		return this.elapsedTimes()
+			.sorted()
+			.limit(ninetyFifth)
+			.average()
+			.orElse(0);
 	}
 
 	public int succeeded() {
-		return this.results.values().stream().mapToInt((result) -> (result.isSucceeded() ? 1 : 0)).sum();
+		return this.results.values()
+			.stream()
+			.mapToInt((result) -> (result.isSucceeded() ? 1 : 0))
+			.sum();
 	}
 
 	public int failed() {
@@ -83,7 +97,9 @@ public class Timestamper {
 	}
 
 	private Stream<SingleRequestResult> sortedResults() {
-		return this.results.values().stream().sorted((a, b) -> (int) (a.getStartedTime() - b.getStartedTime()));
+		return this.results.values()
+			.stream()
+			.sorted((a, b) -> (int) (a.getStartedTime() - b.getStartedTime()));
 	}
 
 	private long first() {
@@ -91,10 +107,16 @@ public class Timestamper {
 	}
 
 	private LongStream startedTimes() {
-		return this.results.values().stream().mapToLong(result -> result.getStartedTime());
+		return this.results.values()
+			.stream()
+			.filter(result -> result.isSucceeded())
+			.mapToLong(result -> result.getStartedTime());
 	}
 
 	private LongStream elapsedTimes() {
-		return this.results.values().stream().mapToLong(result -> result.getElapsedTime());
+		return this.results.values()
+			.stream()
+			.filter(result -> result.isSucceeded())
+			.mapToLong(result -> result.getElapsedTime());
 	}
 }

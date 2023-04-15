@@ -11,11 +11,12 @@
 	<url>http://maven.apache.org</url>
 
 	<properties>
-		<java.version>1.8</java.version>
+		<java.version>20</java.version>
+		<maven-compiler-version>3.11.0</maven-compiler-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<modules>
 		<module>async-server</module>
-    <module>async-client</module>
-  </modules>
+    	<module>async-client</module>
+	</modules>
 </project>
